@@ -34,6 +34,14 @@ public class ZhongHuaYingCaiLogin {
     String headerString = "";
     String location = "";
 
+    public String getHeaderString() {
+        return headerString;
+    }
+
+    public void setHeaderString(String headerString) {
+        this.headerString = headerString;
+    }
+
     public static void main(String arg[]) throws Exception {
         ZhongHuaYingCaiLogin zhongHuaYingCai = new ZhongHuaYingCaiLogin();
         //第一步post
@@ -105,7 +113,7 @@ public class ZhongHuaYingCaiLogin {
         httpget.setHeader("Referer", "http://www.chinahr.com/modules/hmcompanyx/?c=login&http_referer=");
         HttpResponse getResponse = httpclient.execute(httpget);
 //		System.out.println(getResponse.toString());
-        System.out.println("登录成功");
+//        System.out.println("登录成功");
         headers = getResponse.getHeaders("Set-Cookie");
         headerString += updateCookie(headers);
         httpget.releaseConnection();
