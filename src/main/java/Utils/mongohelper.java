@@ -15,7 +15,7 @@ import java.util.Date;
  */
 public class MongoHelper {
     private static Logger logger = Logger.getLogger(MongoHelper.class.getName());
-
+    public static int newAddResumeCount = 0;
     private static MongoClient mongoClient;
     private static DB db;
     public static final String mongoDBname = "yingcai";
@@ -59,6 +59,7 @@ public class MongoHelper {
                         .append("resume_detil", resume.getResumeDetil())
                         .append("crawled_time", new Date().getTime());
                 getColl(mongoDBname, "yingcai_resume").update(query, obj, true, false);
+                newAddResumeCount++;
                 logger.info("存入:"+resume.getResumeID());
             } else {
                 String first_level_keywords = (String) yingcai_resume.get("first_level_keywords");
@@ -107,7 +108,13 @@ public class MongoHelper {
         return true;
     }
 
+    public static int getNewAddResumeCount() {
+        return newAddResumeCount;
+    }
 
+    public static void setNewAddResumeCount(int newAddResumeCount) {
+        MongoHelper.newAddResumeCount = newAddResumeCount;
+    }
 
     public static void main(String[] args) {
 

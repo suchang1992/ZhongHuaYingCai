@@ -46,7 +46,14 @@ public class ResumeGet {
         try {
             zhongHuaYingCai.login(name, password);
             zhongHuaYingCai.loginRedirect();
-            logger.info(keyWord.getSecondlevel()+":开始爬取 登陆完成");
+            logger.info("验证是否登陆成功");
+            s = zhongHuaYingCai.TestLogin("http://www.chinahr.com/modules/hmcompanyx/?new=index&src=searchx",zhongHuaYingCai.getHeaderString());
+            if (s.length()>1000)
+                logger.info(keyWord.getSecondlevel() + ":开始爬取 登陆完成");
+            else {
+                logger.error(s);
+                logger.error("登陆失败");
+            }
         } catch (IOException e) {
             e.printStackTrace();
             logger.error("登陆失败");

@@ -24,7 +24,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 
 public class ZhongHuaYingCaiLogin {
-//    final static String LOGIN = "http://www.chinahr.com/modules/hmcompanyx/?c=login&m=chklogin";
+    //    final static String LOGIN = "http://www.chinahr.com/modules/hmcompanyx/?c=login&m=chklogin";
     final static String LOGIN = "http://www.chinahr.com/modules/hmcompanyx/index.php?c=loginAjax&m=login&noblock=1";
     final static String SECEND_LOGIN_URL = "http://www.chinahr.com/modules/hmcompanyx/?c=home";
     final static String LOGOUT = "http://www.chinahr.com/modules/hmcompanyx/?c=logout";
@@ -50,9 +50,11 @@ public class ZhongHuaYingCaiLogin {
         //第二步get
         zhongHuaYingCai.loginRedirect();
 //        System.out.println("登陆get完成");
+        String s = zhongHuaYingCai.TestLogin("http://www.chinahr.com/modules/hmcompanyx/?new=index&src=searchx",zhongHuaYingCai.getHeaderString());
+        System.out.println(s);
         //登出
         zhongHuaYingCai.logout();
-		System.exit(0);
+        System.exit(0);
     }
 
     public void logout() throws ClientProtocolException, IOException {
@@ -66,7 +68,32 @@ public class ZhongHuaYingCaiLogin {
         httpLogout.releaseConnection();
     }
 
-
+    public String TestLogin(String url, String cookie) {
+        HttpClient client = HttpClientBuilder.create().build();
+        HttpGet request = new HttpGet(url);
+        try {
+            request.addHeader("Cookie", cookie);
+            HttpResponse response = client.execute(request);
+            return getHtml(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public static String getHtml(HttpResponse response) {
+        StringBuffer result = new StringBuffer();
+        try {
+            BufferedReader rd = new BufferedReader(
+                    new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+            String line;
+            while ((line = rd.readLine()) != null) {
+                result.append(line);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result.toString();
+    }
 
     public void login(String name, String password) throws ClientProtocolException, IOException {
         httpclient = HttpClients.createDefault();
@@ -124,7 +151,7 @@ public class ZhongHuaYingCaiLogin {
         String headerString = "";
         for (Header h : headers) {
             String value = h.getValue();
-            headerString += value+";";
+            headerString += value + ";";
         }
         return headerString;
     }

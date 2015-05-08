@@ -17,6 +17,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.log4j.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -37,17 +39,31 @@ public class ResumeGetMulti {
 
     private static Logger logger = Logger.getLogger(ResumeGetMulti.class.getName());
 
-    public void SearchResumeByKeywordUseMulti(KeyWord keyWord, String name, String password) {
+    int delay = 0;
+
+    public ResumeGetMulti(int delay) {
+        this.delay = delay;
+    }
+
+    public String SearchResumeByKeywordUseMulti(KeyWord keyWord, String name, String password) {
         String s = null;
         ZhongHuaYingCaiLogin zhongHuaYingCai = new ZhongHuaYingCaiLogin();
         //登陆
         try {
             zhongHuaYingCai.login(name, password);
             zhongHuaYingCai.loginRedirect();
-            logger.info(keyWord.getSecondlevel() + ":开始爬取 登陆完成");
+            logger.info("验证是否登陆成功");
+            s = zhongHuaYingCai.TestLogin("http://www.chinahr.com/modules/hmcompanyx/?new=index&src=searchx", zhongHuaYingCai.getHeaderString());
+            if (s.contains("抱歉，您访问我们网站速度过快")) {
+                logger.error(s);
+                logger.error("登陆失败");
+                return "toofast";
+            } else
+                logger.info(keyWord.getSecondlevel() + ":开始爬取 登陆完成");
         } catch (IOException e) {
             e.printStackTrace();
             logger.error("登陆失败");
+            return "error";
         }
         logger.info(keyWord.getSecondlevel() + ":第1页爬取开始");
 
@@ -69,10 +85,6 @@ public class ResumeGetMulti {
         if (s.length() < 3 && maxPostCount-- > 0) {
             s = doPostToGetList(url, formData, zhongHuaYingCai.getHeaderString());
         }
-        if(s.length()<3){
-            logger.error(keyWord.getSecondlevel()+" 第一页获取失败，跳过该关键词");
-            return;
-        }
         JSONObject jsonObject = null;
         PageInfo pageInfo = null;
         try {
@@ -80,17 +92,27 @@ public class ResumeGetMulti {
             pageInfo = new PageInfo(jsonObject.getJSONObject("res").getJSONObject("page"));
         } catch (Exception e) {
             logger.error("page:" + s);
-            return;
+            if (s.length() < 3) {
+                return "error";
+            } else if (s.contains("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">")) {
+                return "error";
+            }
+            jsonObject = JSON.parseObject(s);
+            int msg = jsonObject.getIntValue("msg");
+            if (msg == 999999) {
+                return "" + msg;
+            }
+            return "error";
         }
         logger.info(keyWord.getSecondlevel() + ":共有" + pageInfo.getMaxPageNum() + "页");
         ExecutorService pool = null;
         if (pageInfo.getMaxPageNum() > 1) {
-            logger.info(keyWord.getSecondlevel()+" 建立线程池");
-            pool = Executors.newFixedThreadPool(7);
+            logger.info(keyWord.getSecondlevel() + " 建立线程池");
+            pool = Executors.newFixedThreadPool(3);
             int pageNum = pageInfo.getMaxPageNum() > 8 ? 8 : pageInfo.getMaxPageNum();
             for (int i = 2; i <= pageNum; i++) {
-                pool.submit(new CallableGetResume(zhongHuaYingCai, keyWord, i));
-                logger.info(keyWord.getSecondlevel()+" 建立线程 "+i);
+                pool.submit(new CallableGetResume(zhongHuaYingCai, keyWord, i, delay));
+                logger.info(keyWord.getSecondlevel() + " 建立线程 " + i);
             }
             pool.shutdown();
         }
@@ -102,7 +124,8 @@ public class ResumeGetMulti {
             if (resume != null)
                 new MongoHelper().upsertResumInfo(resume, keyWord);
         }
-        logger.info(keyWord.getSecondlevel()+"第1页爬取完成");
+        logger.info(keyWord.getSecondlevel() + "第1页爬取完成");
+        return "success";
     }
 
     private Resume getResumeDetil(JSONObject obj, KeyWord keyWord, ZhongHuaYingCaiLogin zhongHuaYingCai) {
@@ -114,6 +137,12 @@ public class ResumeGetMulti {
         if (new MongoHelper().isInMongoSearchById(resumeID)) {
             logger.info("skip:" + resumeID);
             return resume;
+        }
+        try {
+            logger.info("休息" + delay + "毫秒");
+            TimeUnit.MILLISECONDS.sleep(delay);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         String s = getResumeDetil(resumeID, keyWord.getSecondlevel(), zhongHuaYingCai.getHeaderString());
         if (s.equals("400")) {
@@ -145,7 +174,7 @@ public class ResumeGetMulti {
         String url = "http://www.chinahr.com/modules/jmw/SocketAjax.php?m=hmresume&f=getresume&tp=4";
         String s = getResumeDetil(url, formData, cookie + "kw=" + keyword);
         int maxPostCount = 3;
-        if (s.length() < 3 && maxPostCount-- > 0) {
+        if (s.length() <= 3 && maxPostCount-- > 0) {
             s = getResumeDetil(url, formData, cookie + "kw=" + keyword);
         }
         return s;
@@ -156,7 +185,10 @@ public class ResumeGetMulti {
         HttpPost request = new HttpPost(url);
         installFormData(formData, request);
         request.addHeader("Cookie", cookie);
+        request.addHeader("Accept", "application/json, text/javascript, */*; q=0.01");
+        request.addHeader("Connection", "keep-alive");
         request.addHeader("Host", "www.chinahr.com");
+        request.addHeader("Origin", "http://www.chinahr.com");
         request.addHeader("X-Requested-With", "XMLHttpRequest");
         request.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.118 Safari/537.36");
         try {
@@ -176,8 +208,12 @@ public class ResumeGetMulti {
         HttpPost request = new HttpPost(url);
         installFormData(formData, request);
         request.addHeader("Cookie", pageCookie);
+        request.addHeader("Accept", "application/json, text/javascript, */*; q=0.01");
+        request.addHeader("Connection", "keep-alive");
         request.addHeader("Host", "www.chinahr.com");
+        request.addHeader("Origin", "http://www.chinahr.com");
         request.addHeader("X-Requested-With", "XMLHttpRequest");
+        request.addHeader("Referer", "http://www.chinahr.com/modules/hmresume/index.php?c=searchx&m=result");
         request.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.118 Safari/537.36");
         try {
             HttpResponse response = client.execute(request);
