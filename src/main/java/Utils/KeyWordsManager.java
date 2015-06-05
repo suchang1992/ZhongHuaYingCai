@@ -20,7 +20,7 @@ public class KeyWordsManager {
     private final String skipkeywordsXls = "skipkeywords.xls";
 
 
-    public void writeKeyWord(KeyWord keyWord) {
+    public void writeKeyWord(KeyWord keyWord,int count) {
         //读取文件
         InputStream skipin = null;
         try {
@@ -37,11 +37,11 @@ public class KeyWordsManager {
             HSSFRow row = skipSheet.getRow(keyWord.getRowNum());
             try {
                 HSSFCell cell = row.createCell(keyWord.getCellNum());
-                cell.setCellValue(keyWord.getSecondlevel());
+                cell.setCellValue(keyWord.getSecondlevel()+":"+count);
             }catch (NullPointerException e){
                 row = skipSheet.createRow(keyWord.getRowNum());
                 HSSFCell cell = row.createCell(keyWord.getCellNum());
-                cell.setCellValue(keyWord.getSecondlevel());
+                cell.setCellValue(keyWord.getSecondlevel()+":"+count);
             }
 
             //写入文件

@@ -33,7 +33,7 @@ public class ZhongHuaYingCaiMain {
             logger.info("开始爬取:" + keyWord.getSecondlevel());
             ArrayList<Resume> resumes = resumeGet.SearchResumeByKeyword(keyWord, name, password);
             logger.info("填写skipkeywords" + keyWord.getSecondlevel());
-            keyWordsManager.writeKeyWord(keyWord);
+            keyWordsManager.writeKeyWord(keyWord, MongoHelper.getNewAddResumeCount());
             logger.info("完成爬取" + keyWord.getSecondlevel());
         }
     }
@@ -41,7 +41,7 @@ public class ZhongHuaYingCaiMain {
     public void SearchResumeByxlsUseMulti(String name, String password) {
         KeyWordsManager keyWordsManager = new KeyWordsManager();
         ArrayList<KeyWord> keyWordsList = keyWordsManager.getKeyWordsList();//读取需要爬取的 关键词
-        ResumeGetMulti resumeGetMulti = new ResumeGetMulti(500);//实例化
+        ResumeGetMulti resumeGetMulti = new ResumeGetMulti(1000);//实例化
         File file = new File("./errorKeywords.txt");
         try {
             FileOutputStream fileOutputStream = new FileOutputStream(file);
@@ -54,15 +54,17 @@ public class ZhongHuaYingCaiMain {
                 if (s.equals("999999")) {
                     stringBuffer.append(keyWord.getSecondlevel() + "\n");
 //                    logger.error("暂停爬取，休息1分钟");
-                    logger.info("999999 错误 暂停1分钟 " + keyWord.getSecondlevel());
-                    TimeUnit.SECONDS.sleep(60);
+                    logger.info("999999 错误 暂停5分钟 " + keyWord.getSecondlevel());
+                    TimeUnit.SECONDS.sleep(60*5);
                     continue;
                 } else if (s.equals("toofast")){
                     logger.error("暂停爬取，稍后手动启动");
                     break;
                 } else {
                     logger.info("填写skipkeywords" + keyWord.getSecondlevel());
-                    keyWordsManager.writeKeyWord(keyWord);
+                    keyWordsManager.writeKeyWord(keyWord, MongoHelper.getNewAddResumeCount());
+                    MongoHelper.setNewAddResumeCount(0);
+                    TimeUnit.SECONDS.sleep(10);
                 }
                 logger.info("完成爬取" + keyWord.getSecondlevel());
                 logger.info("新添加简历"+MongoHelper.getNewAddResumeCount());
@@ -72,7 +74,8 @@ public class ZhongHuaYingCaiMain {
             fileOutputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
             e.printStackTrace();
         }
 //        catch (InterruptedException e) {

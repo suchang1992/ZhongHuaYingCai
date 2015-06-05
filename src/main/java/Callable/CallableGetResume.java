@@ -79,6 +79,7 @@ public class CallableGetResume implements Callable {
         while (iterator.hasNext()) {
             JSONObject obj = (JSONObject) iterator.next();
             Resume resume = getResumeDetil(obj, keyWord, zhongHuaYingCai);
+//            TimeUnit.SECONDS.sleep(2);
             if (resume != null)
                 new MongoHelper().upsertResumInfo(resume, keyWord);
         }
@@ -99,7 +100,7 @@ public class CallableGetResume implements Callable {
         }
 
         try {
-            logger.info("休息" + delay + "毫秒");
+            logger.info("找到新简历 休息" + delay + "毫秒");
             TimeUnit.MILLISECONDS.sleep(delay);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -130,16 +131,22 @@ public class CallableGetResume implements Callable {
         formData.put("pr2", "2");
         formData.put("hm1", "400");
         formData.put("hm2", "1800");
-        formData.put("keyword[]", "null");
+        formData.put("keyword[0]", "null");
         formData.put("iterator", "0");
 
         String url = "http://www.chinahr.com/modules/jmw/SocketAjax.php?m=hmresume&f=getresume&tp=4";
         String referer = "http://www.chinahr.com/modules/hmresume/index.php?c=preview&m=view_waterfall&ids="+resumeID+"|"+resumeID+"&keyword=%5Bnull%5D";
-        String s = getResumeDetil(url, formData, cookie + "kw=" + keyword, referer);
-        int maxPostCount = 3;
-        if (s.length() <= 3 && maxPostCount-- > 0) {
-            s = getResumeDetil(url, formData, cookie + "kw=" + keyword, referer);
-        }
+        String s = getResumeDetil(url, formData, cookie, referer);
+//        int maxPostCount = 3;
+//        while (s.length() <= 4 && maxPostCount-- > 0) {
+//            try {
+//                TimeUnit.SECONDS.sleep(5);
+//                logger.error(resumeID+"400 重发 "+maxPostCount);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            s = getResumeDetil(url, formData, cookie + "kw=" + keyword, referer);
+//        }
         return s;
     }
 

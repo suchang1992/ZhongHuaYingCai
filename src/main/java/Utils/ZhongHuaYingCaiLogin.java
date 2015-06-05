@@ -3,14 +3,9 @@ package Utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -34,6 +29,14 @@ public class ZhongHuaYingCaiLogin {
     String headerString = "";
     String location = "";
 
+    public HttpClient getHttpclient() {
+        return httpclient;
+    }
+
+    public void setHttpclient(HttpClient httpclient) {
+        this.httpclient = httpclient;
+    }
+
     public String getHeaderString() {
         return headerString;
     }
@@ -50,7 +53,7 @@ public class ZhongHuaYingCaiLogin {
         //第二步get
         zhongHuaYingCai.loginRedirect();
 //        System.out.println("登陆get完成");
-        String s = zhongHuaYingCai.TestLogin("http://www.chinahr.com/modules/hmcompanyx/?new=index&src=searchx",zhongHuaYingCai.getHeaderString());
+        String s = zhongHuaYingCai.testLogin("http://www.chinahr.com/modules/hmcompanyx/?new=index&src=searchx", zhongHuaYingCai.getHeaderString());
         System.out.println(s);
         //登出
         zhongHuaYingCai.logout();
@@ -68,7 +71,7 @@ public class ZhongHuaYingCaiLogin {
         httpLogout.releaseConnection();
     }
 
-    public String TestLogin(String url, String cookie) {
+    public String testLogin(String url, String cookie) {
         HttpClient client = HttpClientBuilder.create().build();
         HttpGet request = new HttpGet(url);
         try {

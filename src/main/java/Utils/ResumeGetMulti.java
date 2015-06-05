@@ -10,15 +10,12 @@ import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.log4j.Logger;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -53,7 +50,7 @@ public class ResumeGetMulti {
             zhongHuaYingCai.login(name, password);
             zhongHuaYingCai.loginRedirect();
             logger.info("验证是否登陆成功");
-            s = zhongHuaYingCai.TestLogin("http://www.chinahr.com/modules/hmcompanyx/?new=index&src=searchx", zhongHuaYingCai.getHeaderString());
+            s = zhongHuaYingCai.testLogin("http://www.chinahr.com/modules/hmcompanyx/?new=index&src=searchx", zhongHuaYingCai.getHeaderString());
             if (s.contains("抱歉，您访问我们网站速度过快")) {
                 logger.error(s);
                 logger.error("登陆失败");
@@ -109,10 +106,16 @@ public class ResumeGetMulti {
         if (pageInfo.getMaxPageNum() > 1) {
             logger.info(keyWord.getSecondlevel() + " 建立线程池");
             pool = Executors.newFixedThreadPool(3);
-            int pageNum = pageInfo.getMaxPageNum() > 8 ? 8 : pageInfo.getMaxPageNum();
+//            int pageNum = pageInfo.getMaxPageNum() > 8 ? 8 : pageInfo.getMaxPageNum();
+            int pageNum = pageInfo.getMaxPageNum();
             for (int i = 2; i <= pageNum; i++) {
                 pool.submit(new CallableGetResume(zhongHuaYingCai, keyWord, i, delay));
                 logger.info(keyWord.getSecondlevel() + " 建立线程 " + i);
+                try {
+                    TimeUnit.SECONDS.sleep(5);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
             pool.shutdown();
         }
@@ -175,7 +178,12 @@ public class ResumeGetMulti {
         String s = getResumeDetil(url, formData, cookie + "kw=" + keyword);
         int maxPostCount = 3;
         if (s.length() <= 3 && maxPostCount-- > 0) {
-            s = getResumeDetil(url, formData, cookie + "kw=" + keyword);
+            try {
+                TimeUnit.SECONDS.sleep(2);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            s = getResumeDetil(url, formData, cookie);
         }
         return s;
     }

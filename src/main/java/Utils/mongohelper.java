@@ -19,6 +19,7 @@ public class MongoHelper {
     private static MongoClient mongoClient;
     private static DB db;
     public static final String mongoDBname = "yingcai";
+    public static final String collname = "yingcai_resume_test";
     static int crawled_count_min = 0;
 
     static {
@@ -49,7 +50,7 @@ public class MongoHelper {
 
     public void upsertResumInfo(Resume resume, KeyWord keyWord) {
         BasicDBObject query = new BasicDBObject("resumeID", resume.getResumeID());
-        DBObject yingcai_resume = getColl(mongoDBname, "yingcai_resume").findOne(query);
+        DBObject yingcai_resume = getColl(mongoDBname, collname).findOne(query);
         try {
             if (yingcai_resume == null) {
                 BasicDBObject obj = new BasicDBObject("first_level_keywords", keyWord.getFirstlevel())
@@ -58,7 +59,7 @@ public class MongoHelper {
                         .append("simple_resume", resume.getSimpleResume())
                         .append("resume_detil", resume.getResumeDetil())
                         .append("crawled_time", new Date().getTime());
-                getColl(mongoDBname, "yingcai_resume").update(query, obj, true, false);
+                getColl(mongoDBname, collname).update(query, obj, true, false);
                 newAddResumeCount++;
                 logger.info("存入:"+resume.getResumeID());
             } else {
@@ -69,15 +70,15 @@ public class MongoHelper {
                 if(!first_level_keywords.contains(keyWord.getFirstlevel()) && !second_level_keywords.contains(keyWord.getSecondlevel())){
                     obj.append("first_level_keywords", first_level_keywords + "," + keyWord.getFirstlevel());
                     obj.append("second_level_keywords", second_level_keywords + "," + keyWord.getSecondlevel());
-                    getColl(mongoDBname, "yingcai_resume").update(query, new BasicDBObject("$set", obj), true, false);
+                    getColl(mongoDBname, collname).update(query, new BasicDBObject("$set", obj), true, false);
                     logger.info("更新first key and second key:"+resume.getResumeID());
                 } else if (!first_level_keywords.contains(keyWord.getFirstlevel())) {
                     obj.append("first_level_keywords", first_level_keywords + "," + keyWord.getFirstlevel());
-                    getColl(mongoDBname, "yingcai_resume").update(query, new BasicDBObject("$set", obj), true, false);
+                    getColl(mongoDBname, collname).update(query, new BasicDBObject("$set", obj), true, false);
                     logger.info("更新first key:"+resume.getResumeID());
                 } else if (!second_level_keywords.contains(keyWord.getSecondlevel())) {
                     obj.append("second_level_keywords", second_level_keywords + "," + keyWord.getSecondlevel());
-                    getColl(mongoDBname, "yingcai_resume").update(query, new BasicDBObject("$set", obj), true, false);
+                    getColl(mongoDBname, collname).update(query, new BasicDBObject("$set", obj), true, false);
                     logger.info("更新second key:"+resume.getResumeID());
                 } else {
                     return;
@@ -101,7 +102,7 @@ public class MongoHelper {
      */
     public boolean isInMongoSearchById(String resumeID){
         BasicDBObject query = new BasicDBObject("resumeID", resumeID);
-        DBObject yingcai_resume = getColl(mongoDBname, "yingcai_resume").findOne(query);
+        DBObject yingcai_resume = getColl(mongoDBname, collname).findOne(query);
         if (yingcai_resume == null){
             return false;
         }
