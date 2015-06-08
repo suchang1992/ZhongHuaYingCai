@@ -127,6 +127,10 @@ public class ResumeGetMulti {
             if (resume != null)
                 new MongoHelper().upsertResumInfo(resume, keyWord);
         }
+
+
+
+
         logger.info(keyWord.getSecondlevel() + "第1页爬取完成");
         return "success";
     }

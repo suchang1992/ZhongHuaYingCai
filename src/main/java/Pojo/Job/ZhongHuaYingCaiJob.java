@@ -44,6 +44,8 @@ public class ZhongHuaYingCaiJob {
             return "登陆失败";
         else if(code == StatuCodes.GET_JOB_ID_ERROR)
             return "获取职位ID失败";
+        else if(code == StatuCodes.JOB_COUNT_NOT_ENOUGH)
+            return "职位点数不足";
         else if(code == StatuCodes.GET_JOB_ID_JSON_ERROR)
             return "POST之后的返回值JSON解析出错，重试";
         else

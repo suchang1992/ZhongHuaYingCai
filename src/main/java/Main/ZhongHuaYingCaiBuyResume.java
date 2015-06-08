@@ -1,6 +1,9 @@
 package Main;
 
+import Pojo.Job.YingCaiContact;
+import Pojo.StatuCodes;
 import Utils.ZhongHuaYingCaiLogin;
+import com.alibaba.fastjson.JSONObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -29,54 +32,58 @@ public class ZhongHuaYingCaiBuyResume {
 
 
     public static void main(String[] args) {
-        String resumeId = "e995ae84a717ba530e3f4a14j";//成都的  msg:100020 正确
+        String resumeId = "c49cae84fb1c10555171f504j";//成都的  msg:100020 正确
 //        String resumeId = "2c6aae8473ce675523106946j"; //msg:110012 错误
-        ZhongHuaYingCaiLogin zhongHuaYingCai = new ZhongHuaYingCaiLogin();
-        try {
-            zhongHuaYingCai.login("vipcdylf", "longhu123");
-            zhongHuaYingCai.loginRedirect();
-//            HashMap<String, String> formData = new HashMap<>();
-//            formData.put("jobAppId", "");
-//            formData.put("cvId", resumeId);
-//            formData.put("src", "4");
-            ZhongHuaYingCaiBuyResume zhongHuaYingCaiBuyResume = new ZhongHuaYingCaiBuyResume();
-//
-//            String s = zhongHuaYingCaiBuyResume.buyResume(formData,zhongHuaYingCai.getHeaderString());
-//            System.out.println(s);
-            System.out.println(zhongHuaYingCaiBuyResume.getResumeCanbeBuyCount(zhongHuaYingCai.getHeaderString()));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        ZhongHuaYingCaiBuyResume zhongHuaYingCaiBuyResume = new ZhongHuaYingCaiBuyResume();
+        YingCaiContact yingCaiContact = zhongHuaYingCaiBuyResume.buyResume("vipcdylf", "longhu123", resumeId);
+        System.out.println(yingCaiContact);
 
     }
 
     /**
-     *
      * @param name
      * @param password
      * @param resume_id
-     * @return  错误返回null 正确返回json （json中msg代表状态码）
+     * @return
      */
-    public String buyResume(String name, String password, String resume_id){
+    public YingCaiContact buyResume(String name, String password, String resume_id) {
         ZhongHuaYingCaiLogin zhongHuaYingCai = new ZhongHuaYingCaiLogin();
         try {
             zhongHuaYingCai.login(name, password);
             zhongHuaYingCai.loginRedirect();
-
+            YingCaiContact yingCaiContact = new YingCaiContact();
+            //验证是否登陆成功
+            String s = zhongHuaYingCai.testLogin("http://www.chinahr.com/modules/feedback/index.php?m=userinfo&noblock=1", zhongHuaYingCai.getHeaderString());
+            //{"type":"","cs_tel":"400-706-4000"}  //登陆失败
+            //{"type":"hrmanagers","name":"\u6210\u90fd\u6613\u7acb\u65b9\u4fe1\u606f\u6280\u672f\u6709\u9650\u516c\u53f8","tel":"028-61837805","email":"hr@cdecube.com","cs_tel":"400-706-4000"} //登陆成功
+            JSONObject jsonObject = JSONObject.parseObject(s);
+            if (jsonObject.getString("type").equals("")) {
+                yingCaiContact.setCode(StatuCodes.LOGIN_ERROR_CODE);
+                return yingCaiContact;
+            }
             int ramin_count = getResumeCanbeBuyCount(zhongHuaYingCai.getHeaderString());
-            if(ramin_count==0)
-                return "";
+            if (ramin_count == 0) {
+                yingCaiContact.setCode(StatuCodes.RESUME_COUNT_NOT_ENOUGH);
+                return yingCaiContact;
+            }
 
-            HashMap<String, String> formData = new HashMap<>();
+            HashMap<String, String> formData = new HashMap<String, String>();
             formData.put("jobAppId", "");
             formData.put("cvId", resume_id);
             formData.put("src", "4");
-            ZhongHuaYingCaiBuyResume zhongHuaYingCaiBuyResume = new ZhongHuaYingCaiBuyResume();
-            String s = zhongHuaYingCaiBuyResume.buyResume(formData,zhongHuaYingCai.getHeaderString());
-//            System.out.println(s);
-            return s;
+            s = buyResume(formData, zhongHuaYingCai.getHeaderString());
+            yingCaiContact.setMsg(s);
+//            System.out.println(s);//{"msg":100020,"res":{"jsName":"\u5b89\u822a","phone":"13438011015","email":"19299168@163.com","emailShort":"19299168@16\u2026","emailLong":"19299168@163.com","jobAppId":"1db3ae84744271550551aa48j","jobId":null,"jobName":null,"remain_points":null,"tips_type":1},"json":null}
+            JSONObject jso = JSONObject.parseObject(s);
+            int msg = jso.getIntValue("msg");
+            if(msg==100020){
+                yingCaiContact.setCode(StatuCodes.GET_RESUME_CONTACT_SUCCESS_CODE);
+            }else if(msg == 110012){
+                yingCaiContact.setCode(StatuCodes.RESUME_ARE_ERROR);
+            }else {
+                yingCaiContact.setCode(StatuCodes.GET_RESUME_CONTACT_ERROR);
+            }
+            return yingCaiContact;
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -85,10 +92,11 @@ public class ZhongHuaYingCaiBuyResume {
 
     /**
      * 获取剩余可购买数
+     *
      * @param cookie
      * @return
      */
-    public int getResumeCanbeBuyCount(String cookie){
+    public int getResumeCanbeBuyCount(String cookie) {
         HttpClient client = HttpClientBuilder.create().build();
         HttpPost request = new HttpPost(count_ramin_url);
         request.addHeader("Cookie", cookie);
@@ -110,7 +118,7 @@ public class ZhongHuaYingCaiBuyResume {
     }
 
 
-    private String buyResume(HashMap<String, String> formData, String cookie){
+    private String buyResume(HashMap<String, String> formData, String cookie) {
         HttpClient client = HttpClientBuilder.create().build();
         HttpPost request = new HttpPost(postUrl);
         installFormData(formData, request);

@@ -79,6 +79,7 @@ public class ZhongHuaYingCaiPullJobResume {
                 jsonArray = jsonObject.getJSONObject("res").getJSONArray("resumeList");
                 addJobResume(jsonArray, jonResume);
             }
+            jonResume.setCode(StatuCodes.PULL_RESUME_SUCCESS_CODE);
         } catch (JSONException e) {
             jonResume.setCode(StatuCodes.STRING_TO_JSON_ERROR);
             return;

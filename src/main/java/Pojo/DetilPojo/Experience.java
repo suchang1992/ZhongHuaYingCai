@@ -17,7 +17,7 @@ public class Experience {
     String department;
     String end;
     String id;
-    ArrayList<Industry> industry = new ArrayList<>();
+    ArrayList<Industry> industry = new ArrayList<Industry>();
     String inputJobName;
     String isDel;
     String jobName;

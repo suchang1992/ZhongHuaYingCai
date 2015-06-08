@@ -7,7 +7,7 @@ import java.util.ArrayList;
  */
 public class ZhongHuaYingCaiJobResume {
     String jobId;
-    ArrayList<JobResume> resumeIds = new ArrayList<>();
+    ArrayList<JobResume> resumeIds = new ArrayList<JobResume>();
     int resumeCount;
     int code = 0;
 
