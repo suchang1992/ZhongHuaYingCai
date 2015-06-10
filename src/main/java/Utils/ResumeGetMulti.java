@@ -66,6 +66,8 @@ public class ResumeGetMulti {
 
         HashMap<String, String> formData = new HashMap<>();
         formData.put("flag", "1");
+        formData.put("recruitRangeSelector312result", "27,312");
+        formData.put("wishPlacesId", "27,312");
         formData.put("keywordSelect1", "0");
         formData.put("fuzzyWishPlace", "1");
         formData.put("matchLevel", "1,2");
@@ -106,8 +108,8 @@ public class ResumeGetMulti {
         if (pageInfo.getMaxPageNum() > 1) {
             logger.info(keyWord.getSecondlevel() + " 建立线程池");
             pool = Executors.newFixedThreadPool(3);
-//            int pageNum = pageInfo.getMaxPageNum() > 8 ? 8 : pageInfo.getMaxPageNum();
-            int pageNum = pageInfo.getMaxPageNum();
+            int pageNum = pageInfo.getMaxPageNum() > 8 ? 8 : pageInfo.getMaxPageNum();
+//            int pageNum = pageInfo.getMaxPageNum();
             for (int i = 2; i <= pageNum; i++) {
                 pool.submit(new CallableGetResume(zhongHuaYingCai, keyWord, i, delay));
                 logger.info(keyWord.getSecondlevel() + " 建立线程 " + i);

@@ -20,6 +20,8 @@ public class KeyWordsManager {
     private final String skipkeywordsXls = "skipkeywords.xls";
 
 
+
+
     public void writeKeyWord(KeyWord keyWord,int count) {
         //读取文件
         InputStream skipin = null;
@@ -121,6 +123,105 @@ public class KeyWordsManager {
         }
     }
 
+    public void writeKeyWord(String path, KeyWord keyWord,int count) {
+        //读取文件
+        InputStream skipin = null;
+        try {
+            skipin = new FileInputStream(new File(path));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            System.out.println("未找到:" + path + " 请自行创建");
+        }
+
+        HSSFWorkbook skipWork = null;
+        try {
+            skipWork = new HSSFWorkbook(skipin);
+            HSSFSheet skipSheet = skipWork.getSheetAt(0);
+            HSSFRow row = skipSheet.getRow(keyWord.getRowNum());
+            try {
+                HSSFCell cell = row.createCell(keyWord.getCellNum());
+                cell.setCellValue(keyWord.getSecondlevel()+":"+count);
+            }catch (NullPointerException e){
+                row = skipSheet.createRow(keyWord.getRowNum());
+                HSSFCell cell = row.createCell(keyWord.getCellNum());
+                cell.setCellValue(keyWord.getSecondlevel()+":"+count);
+            }
+
+            //写入文件
+            FileOutputStream fileoutputstream = new FileOutputStream(path);
+            skipWork.write(fileoutputstream);
+            fileoutputstream.close();
+            skipin.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+    }
+    public ArrayList<KeyWord> getKeyWordsList(String path,String output) {
+
+        InputStream basein = ClassLoader.getSystemResourceAsStream(path);
+        if (basein == null) {
+            System.out.println("未找到:" + path + " 请自行创建");
+            return null;
+        }
+        InputStream skipin = null;
+        try {
+            skipin = new FileInputStream(new File(output));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            System.out.println("未找到:" + output + " 请自行创建");
+            return null;
+        }
+
+        HSSFWorkbook baseWork = null;
+        HSSFWorkbook skipWork = null;
+
+        try {
+            baseWork = new HSSFWorkbook(basein);
+
+            skipWork = new HSSFWorkbook(skipin);
+            // 在Excel文档中，第一张工作表的缺省索引是0，
+            HSSFSheet baseSheet = baseWork.getSheetAt(0);
+            HSSFSheet skipSheet = skipWork.getSheetAt(0);
+
+            int lastRowNum = baseSheet.getLastRowNum();
+            int firstRowNum = baseSheet.getFirstRowNum();//获得第一行的行号
+            ArrayList<KeyWord> list = new ArrayList<KeyWord>();
+            for (int i = firstRowNum; i <= lastRowNum; i++) {//访问每一行
+                Row baserow = baseSheet.getRow(i);
+                Row skiprow = skipSheet.getRow(i);
+                String firstKeyword = null;
+                try {
+                    firstKeyword = baserow.getCell(0).getStringCellValue();
+                }catch (NullPointerException e ){
+                    continue;
+                }
+                int cellNum = baserow.getLastCellNum();
+                for (int j = 0; j < cellNum; j++) {
+                    String s = baserow.getCell(j).getStringCellValue();
+                    try {
+                        skiprow.getCell(j).getStringCellValue();//在skip中找到了，则不加入
+                        continue;
+                    } catch (NullPointerException e) {//在skip中没找到，则加入
+                        if (!s.equals("")) {
+                            KeyWord keyWord = new KeyWord(i, j);
+                            keyWord.setSecondlevel(baserow.getCell(j).getStringCellValue());//填写子类名
+                            keyWord.setFirstlevel(firstKeyword);
+                            list.add(keyWord);
+                        }
+                    }
+                }
+            }
+
+            basein.close();
+            skipin.close();
+            return list;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
     public static void main(String[] args) {
         ArrayList<KeyWord> keyWordsList = new KeyWordsManager().getKeyWordsList();
     }
