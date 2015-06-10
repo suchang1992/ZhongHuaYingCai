@@ -220,9 +220,10 @@ public class ZhongHuaYingCaiSpider {
 
         HashMap<String, String> formData = new HashMap<>();
         formData.put("flag", "1");
-        if (this.spiderConfig.isLimitArea())
-            formData.put("recruitRangeSelector312result", "27,312");
-        formData.put("wishPlacesId", "27,312");
+        if (this.spiderConfig.isLimitArea()) {
+            formData.put("wishPlacesId", spiderConfig.getArea_id());
+            formData.put("recruitRangeSelector312result", spiderConfig.getArea_id());
+        }
         formData.put("keywordSelect1", "0");
         formData.put("fuzzyWishPlace", "1");
         formData.put("matchLevel", "1,2");
