@@ -106,8 +106,8 @@ public class KeyWordsManager {
                     } catch (NullPointerException e) {//在skip中没找到，则加入
                         if (!s.equals("")) {
                             KeyWord keyWord = new KeyWord(i, j);
-                            keyWord.setSecondlevel(baserow.getCell(j).getStringCellValue());//填写子类名
-                            keyWord.setFirstlevel(firstKeyword);
+                            keyWord.setSecondlevel(baserow.getCell(j).getStringCellValue().trim());//填写子类名
+                            keyWord.setFirstlevel(firstKeyword.trim());
                             list.add(keyWord);
                         }
                     }
@@ -206,8 +206,8 @@ public class KeyWordsManager {
                     } catch (NullPointerException e) {//在skip中没找到，则加入
                         if (!s.equals("")) {
                             KeyWord keyWord = new KeyWord(i, j);
-                            keyWord.setSecondlevel(baserow.getCell(j).getStringCellValue());//填写子类名
-                            keyWord.setFirstlevel(firstKeyword);
+                            keyWord.setSecondlevel(baserow.getCell(j).getStringCellValue().trim());//填写子类名
+                            keyWord.setFirstlevel(firstKeyword.trim());
                             list.add(keyWord);
                         }
                     }
