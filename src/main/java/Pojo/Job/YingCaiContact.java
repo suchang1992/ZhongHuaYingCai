@@ -29,6 +29,14 @@ public class YingCaiContact {
     public String toString() {
         if(code== StatuCodes.GET_RESUME_CONTACT_SUCCESS_CODE)
             return "获取成功";
+        else if(code == StatuCodes.LOGIN_ERROR_CODE)
+            return "登陆失败";
+        else if(code == StatuCodes.RESUME_COUNT_NOT_ENOUGH)
+            return "可购买职位数不足";
+        else if(code == StatuCodes.RESUME_ARE_ERROR)
+            return "账号地区和简历地区不对应";
+        else if(code == StatuCodes.GET_RESUME_CONTACT_ERROR)
+            return "获取联系方式失败";
         else
             return "error";
     }

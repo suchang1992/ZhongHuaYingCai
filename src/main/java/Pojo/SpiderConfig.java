@@ -19,6 +19,15 @@ public class SpiderConfig {
     private String mongodbUserName = null;
     private String mongodbPassword = null;
     private int account_status;// = 3;//1:在线企业  2:  3:非在线企业
+    private String version = "";
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
 
     public int getAccount_status() {
         return account_status;

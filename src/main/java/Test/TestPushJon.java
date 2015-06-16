@@ -17,7 +17,7 @@ public class TestPushJon {
             zhongHuaYingCai.loginRedirect();
             ZhongHuaYingCaiPushJob zhongHuaYingCaiPushJob = new ZhongHuaYingCaiPushJob();
             ZhongHuaYingCaiJob zhongHuaYingCaiJob = new ZhongHuaYingCaiJob();
-            zhongHuaYingCaiPushJob.getNewJobId(zhongHuaYingCai, zhongHuaYingCaiJob, "运维工程师");
+            zhongHuaYingCaiPushJob.getNewJobId(zhongHuaYingCai, zhongHuaYingCaiJob, "网络爬虫工程师");
             System.out.println(zhongHuaYingCaiJob);
         } catch (IOException e) {
             e.printStackTrace();

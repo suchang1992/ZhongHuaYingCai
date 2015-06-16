@@ -32,10 +32,10 @@ public class ZhongHuaYingCaiBuyResume {
 
 
     public static void main(String[] args) {
-        String resumeId = "c49cae84fb1c10555171f504j";//成都的  msg:100020 正确
+        String resumeId = "cd0cae840001785560238acdj";//成都的  msg:100020 正确
 //        String resumeId = "2c6aae8473ce675523106946j"; //msg:110012 错误
         ZhongHuaYingCaiBuyResume zhongHuaYingCaiBuyResume = new ZhongHuaYingCaiBuyResume();
-        YingCaiContact yingCaiContact = zhongHuaYingCaiBuyResume.buyResume("vipcdylf", "longhu123", resumeId);
+        YingCaiContact yingCaiContact = zhongHuaYingCaiBuyResume.buyResume("vipcdslxy", "xunying#123", resumeId);
         System.out.println(yingCaiContact);
 
     }

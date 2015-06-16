@@ -1,8 +1,10 @@
 package Main;
 
 import Pojo.Job.YingCaiResume;
+import Pojo.Resume;
 import Pojo.StatuCodes;
 import Utils.ZhongHuaYingCaiLogin;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -30,7 +32,7 @@ public class ZhongHuaYingCaiGetResume {
 
     public static void main(String[] args) throws IOException {
 
-        YingCaiResume yingCaiResume = new ZhongHuaYingCaiGetResume().getResumeDetil("vipcdylf", "longhu123","e995ae84a717ba530e3f4a14j");
+        YingCaiResume yingCaiResume = new ZhongHuaYingCaiGetResume().getResumeDetil("vipcdylf", "longhu123","12-3119662");
         System.out.println(yingCaiResume.getResume_string());
     }
 

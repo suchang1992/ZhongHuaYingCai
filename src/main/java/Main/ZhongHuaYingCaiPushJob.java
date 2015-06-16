@@ -8,13 +8,17 @@ import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -22,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Administrator on 2015/6/2.
@@ -346,20 +351,25 @@ public class ZhongHuaYingCaiPushJob {
     }
 
     public boolean getNewJobId(ZhongHuaYingCaiLogin zhongHuaYingCai, ZhongHuaYingCaiJob zhongHuaYingCaiJob, String jobName){
+        HttpClient client = HttpClientBuilder.create().build();
         HttpGet httpget = new HttpGet(online_job_list_url);
+        httpget.addHeader("Cookie", zhongHuaYingCai.getHeaderString());
         try {
-            HttpResponse getResponse = zhongHuaYingCai.getHttpclient().execute(httpget);
+            HttpResponse getResponse = client.execute(httpget);
             Document doc = Jsoup.parse(ZhongHuaYingCaiLogin.getHtml(getResponse));
-            Element first_job_info = doc.getElementsByAttributeValue("class", "jobListItem").first();
-            String job_name = first_job_info.getElementsByAttributeValue("class","fl jobName jobName2 alrTxtLef").first().child(0).attr("title");
-            String job_time = first_job_info.getElementsByAttributeValue("class","fl timeEfc").first().text();
-            if(job_name.equals(jobName) && new SimpleDateFormat("yyyy-MM-dd").format(new Date()).equals(job_time)) {
-                zhongHuaYingCaiJob.setJobId(first_job_info.attr("rel"));
-                zhongHuaYingCaiJob.setCode(StatuCodes.PUSH_JOB_SUCCESS_CODE);
-                return true;
-            }else {
-                zhongHuaYingCaiJob.setCode(StatuCodes.GET_JOB_ID_ERROR);
-                return false;
+
+            Elements elements= doc.getElementsByAttributeValue("class", "jobListItem");
+            for (Element element : elements ){
+                String job_name = element.getElementsByAttributeValue("class","fl jobName jobName2 alrTxtLef").first().child(0).attr("title");
+                String job_time = element.getElementsByAttributeValue("class","fl timeEfc").first().text();
+                if(job_name.equals(jobName) && new SimpleDateFormat("yyyy-MM-dd").format(new Date()).equals(job_time)) {
+                    zhongHuaYingCaiJob.setJobId(element.attr("rel"));
+                    zhongHuaYingCaiJob.setCode(StatuCodes.PUSH_JOB_SUCCESS_CODE);
+                    return true;
+                }else {
+                    zhongHuaYingCaiJob.setCode(StatuCodes.GET_JOB_ID_ERROR);
+                    continue;
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

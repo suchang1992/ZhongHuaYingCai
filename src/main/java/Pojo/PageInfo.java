@@ -1,7 +1,7 @@
 package Pojo;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+
+import com.mongodb.BasicDBObject;
 
 /**
  * Created by Administrator on 2015/4/24.
@@ -11,9 +11,9 @@ public class PageInfo {
     int maxResumeNum;
 //    int maxCanReadPageNum;
 
-    public PageInfo(JSONObject jsonObject) {
-        this.maxPageNum = jsonObject.getInteger("max");
-        this.maxResumeNum = jsonObject.getInteger("total");
+    public PageInfo(BasicDBObject jsonObject) {
+        this.maxPageNum = jsonObject.getInt("max");
+        this.maxResumeNum = jsonObject.getInt("total");
     }
 
     public int getMaxPageNum() {

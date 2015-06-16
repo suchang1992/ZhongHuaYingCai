@@ -1,6 +1,7 @@
 package Pojo;
 
 import com.alibaba.fastjson.JSONObject;
+import com.mongodb.BasicDBObject;
 
 import java.util.ArrayList;
 
@@ -10,9 +11,26 @@ import java.util.ArrayList;
 public class Resume {
     String resumeID;
     KeyWord keyWord;
-    JSONObject simpleResume;
-    JSONObject resumeDetil;
+    BasicDBObject simpleResume;
+    BasicDBObject resumeDetil;
+    String version;
+    int refreshDate;
 
+    public int getRefreshDate() {
+        return refreshDate;
+    }
+
+    public void setRefreshDate(int refreshDate) {
+        this.refreshDate = refreshDate;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
 
     public KeyWord getKeyWord() {
         return keyWord;
@@ -34,35 +52,20 @@ public class Resume {
         this.resumeID = resumeID;
     }
 
-    public JSONObject getSimpleResume() {
+    public BasicDBObject getSimpleResume() {
         return simpleResume;
     }
 
-    public void setSimpleResume(JSONObject simpleResume) {
-        try{
-            simpleResume.remove("percent");
-        }catch (Exception e){
-            e.printStackTrace();
-            if (simpleResume==null)
-                System.out.println("simpleResume null");
-        }
+    public void setSimpleResume(BasicDBObject simpleResume) {
         this.simpleResume = simpleResume;
     }
 
-    public JSONObject getResumeDetil() {
+    public BasicDBObject getResumeDetil() {
         return resumeDetil;
     }
 
 
-    public void setResumeDetil(JSONObject resumeDetil) {
-        try{
-            resumeDetil.remove("percent");
-            resumeDetil.remove("score");
-        }catch (Exception e){
-            e.printStackTrace();
-            if (resumeDetil==null)
-                System.out.println("resumeDetil null");
-        }
+    public void setResumeDetil(BasicDBObject resumeDetil) {
         this.resumeDetil = resumeDetil;
     }
 }

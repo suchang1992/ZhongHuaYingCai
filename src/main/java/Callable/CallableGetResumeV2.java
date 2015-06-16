@@ -7,9 +7,9 @@ import Utils.CommonParameter;
 import Utils.MongoDBHelper;
 import Utils.SpiderGetResume;
 import Utils.ZhongHuaYingCaiLogin;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
+import com.mongodb.util.JSON;
 import org.apache.log4j.Logger;
 
 import java.util.HashMap;
@@ -58,12 +58,12 @@ public class CallableGetResumeV2 implements Callable{
         formData.put("keywordSelect", "0");
         formData.put("page", ""+pageNum);
         String json = SpiderGetResume.doPostToGetList(CommonParameter.resume_list_url, formData, this.cookie);
-        JSONObject jsonObject = JSON.parseObject(json);
+        BasicDBObject jsonObject = (BasicDBObject) JSON.parse(json);
 
-        JSONArray jsonArray = jsonObject.getJSONObject("res").getJSONArray("resumeList");
+        BasicDBList jsonArray = (BasicDBList)((BasicDBObject)jsonObject.get("res")).get("resumeList");
         Iterator<Object> iterator = jsonArray.iterator();
         while (iterator.hasNext()) {
-            JSONObject obj = (JSONObject) iterator.next();
+            BasicDBObject obj = (BasicDBObject) iterator.next();
             Resume resume = SpiderGetResume.getResumeDetil(obj, this.keyWord, this.cookie, this.mongoDBHelper, 1000);
             if (resume != null) {
                 int i = this.mongoDBHelper.upsertResumInfo(resume, keyWord);
@@ -71,6 +71,7 @@ public class CallableGetResumeV2 implements Callable{
                     count++;
             }
         }
+        logger.info(keyWord.getSecondlevel()+" 第"+pageNum+"页完成:"+count);
         return count;
     }
 }

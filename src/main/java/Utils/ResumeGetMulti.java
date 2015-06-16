@@ -4,10 +4,10 @@ import Callable.CallableGetResume;
 import Pojo.KeyWord;
 import Pojo.PageInfo;
 import Pojo.Resume;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONException;
-import com.alibaba.fastjson.JSONObject;
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
+import com.mongodb.util.JSON;
+import com.mongodb.util.JSONParseException;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -84,11 +84,11 @@ public class ResumeGetMulti {
         if (s.length() < 3 && maxPostCount-- > 0) {
             s = doPostToGetList(url, formData, zhongHuaYingCai.getHeaderString());
         }
-        JSONObject jsonObject = null;
+        BasicDBObject jsonObject = null;
         PageInfo pageInfo = null;
         try {
-            jsonObject = JSON.parseObject(s);
-            pageInfo = new PageInfo(jsonObject.getJSONObject("res").getJSONObject("page"));
+            jsonObject = (BasicDBObject) JSON.parse(s);
+            pageInfo = new PageInfo((BasicDBObject)((BasicDBObject)jsonObject.get("res")).get("page"));
         } catch (Exception e) {
             logger.error("page:" + s);
             if (s.length() < 3) {
@@ -96,8 +96,8 @@ public class ResumeGetMulti {
             } else if (s.contains("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">")) {
                 return "error";
             }
-            jsonObject = JSON.parseObject(s);
-            int msg = jsonObject.getIntValue("msg");
+            jsonObject = (BasicDBObject)JSON.parse(s);
+            int msg = jsonObject.getInt("msg");
             if (msg == 999999) {
                 return "" + msg;
             }
@@ -121,10 +121,10 @@ public class ResumeGetMulti {
             }
             pool.shutdown();
         }
-        JSONArray jsonArray = jsonObject.getJSONObject("res").getJSONArray("resumeList");
+        BasicDBList jsonArray = (BasicDBList)((BasicDBObject)jsonObject.get("res")).get("resumeList");
         Iterator<Object> iterator = jsonArray.iterator();
         while (iterator.hasNext()) {
-            JSONObject obj = (JSONObject) iterator.next();
+            BasicDBObject obj = (BasicDBObject) iterator.next();
             Resume resume = getResumeDetil(obj, keyWord, zhongHuaYingCai);
             if (resume != null)
                 new MongoHelper().upsertResumInfo(resume, keyWord);
@@ -137,7 +137,7 @@ public class ResumeGetMulti {
         return "success";
     }
 
-    private Resume getResumeDetil(JSONObject obj, KeyWord keyWord, ZhongHuaYingCaiLogin zhongHuaYingCai) {
+    private Resume getResumeDetil(BasicDBObject obj, KeyWord keyWord, ZhongHuaYingCaiLogin zhongHuaYingCai) {
         String resumeID = obj.getString("cvId");
 
         Resume resume = new Resume(resumeID);
@@ -160,8 +160,8 @@ public class ResumeGetMulti {
         }
         logger.error(resumeID + ":detil:" + s);
         try {//如果转化失败 则返回空
-            resume.setResumeDetil(JSONObject.parseObject(s));
-        } catch (JSONException e) {
+            resume.setResumeDetil((BasicDBObject)JSON.parse(s));
+        } catch (JSONParseException e) {
             logger.error("error:" + s);
             return null;
         }

@@ -3,10 +3,10 @@ package Utils;
 import Pojo.KeyWord;
 import Pojo.PageInfo;
 import Pojo.Resume;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONException;
-import com.alibaba.fastjson.JSONObject;
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
+import com.mongodb.util.JSON;
+import com.mongodb.util.JSONParseException;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -67,13 +67,13 @@ public class ResumeGet {
             logger.error(s);
             return null;
         }
-        JSONObject jsonObject = JSON.parseObject(s);
-        PageInfo pageInfo = new PageInfo(jsonObject.getJSONObject("res").getJSONObject("page"));
+        BasicDBObject jsonObject = (BasicDBObject) JSON.parse(s);
+        PageInfo pageInfo = new PageInfo((BasicDBObject)((BasicDBObject)jsonObject.get("res")).get("page"));
         logger.info(keyWord.getSecondlevel() + ":共有" + pageInfo.getMaxPageNum() + "页");
-        JSONArray jsonArray = jsonObject.getJSONObject("res").getJSONArray("resumeList");
+        BasicDBList jsonArray = (BasicDBList)((BasicDBObject)jsonObject.get("res")).get("resumeList");
         Iterator<Object> iterator = jsonArray.iterator();
         while (iterator.hasNext()) {
-            JSONObject obj = (JSONObject) iterator.next();
+            BasicDBObject obj = (BasicDBObject) iterator.next();
             Resume resume = getResumeDetil(obj, keyWord, zhongHuaYingCai);
             if (resume != null)
                 new MongoHelper().upsertResumInfo(resume, keyWord);
@@ -86,11 +86,11 @@ public class ResumeGet {
                 logger.info(keyWord.getSecondlevel() + ":第" + i + "页爬取开始");
                 s = getResumeListPage(keyWord,zhongHuaYingCai,i);
                 logger.error("page string:" + s.length());
-                jsonObject = JSON.parseObject(s);
-                jsonArray = jsonObject.getJSONObject("res").getJSONArray("resumeList");
+                jsonObject = (BasicDBObject)JSON.parse(s);
+                jsonArray = (BasicDBList)((BasicDBObject)jsonObject.get("res")).get("resumeList");
                 iterator = jsonArray.iterator();
                 while (iterator.hasNext()) {
-                    JSONObject obj = (JSONObject) iterator.next();
+                    BasicDBObject obj = (BasicDBObject) iterator.next();
                     Resume resume = getResumeDetil(obj, keyWord, zhongHuaYingCai);
                     if (resume != null)
                         new MongoHelper().upsertResumInfo(resume, keyWord);
@@ -108,7 +108,7 @@ public class ResumeGet {
         return null;
     }
 
-    private Resume getResumeDetil(JSONObject obj, KeyWord keyWord, ZhongHuaYingCaiLogin zhongHuaYingCai){
+    private Resume getResumeDetil(BasicDBObject obj, KeyWord keyWord, ZhongHuaYingCaiLogin zhongHuaYingCai){
         String resumeID = obj.getString("cvId");
         if(new MongoHelper().isInMongoSearchById(resumeID)){
             logger.info("skip:"+resumeID);
@@ -124,8 +124,8 @@ public class ResumeGet {
         }
         logger.error(resumeID + ":detil:" + s);
         try {//如果转化失败 则返回空
-            resume.setResumeDetil(JSONObject.parseObject(s));
-        }catch (JSONException e){
+            resume.setResumeDetil((BasicDBObject)JSON.parse(s));
+        }catch (JSONParseException e){
             logger.error("error:"+s);
             return null;
         }

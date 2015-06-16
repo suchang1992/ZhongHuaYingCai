@@ -6,27 +6,14 @@ import Pojo.PageInfo;
 import Pojo.Resume;
 import Pojo.SpiderConfig;
 import Utils.*;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONException;
-import com.alibaba.fastjson.JSONObject;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicNameValuePair;
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
+import com.mongodb.util.JSON;
 import org.apache.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
@@ -42,9 +29,6 @@ public class ZhongHuaYingCaiSpider {
     private String keyword_output_path;// = "./";
     private String output_file_name;// = "skipkeywords.xls";
     private boolean isInit = false;
-
-
-    private static int delay = 1000;
     private int count = 0;
     private MongoDBHelper mongoDBHelper;
 
@@ -53,7 +37,7 @@ public class ZhongHuaYingCaiSpider {
 
 
     public boolean init(String dbName, String db_ip, int port, String collectionName,
-                        String username, String password, String area_id, int delay_time,
+                        String username, String password, String area_id, String version, int delay_time,
                         String keyword_path_name, String keyword_output_path, String output_file_name) {
         if (dbName == null) {
             logger.error("dbName == null,example:yingcai");
@@ -92,6 +76,10 @@ public class ZhongHuaYingCaiSpider {
             this.spiderConfig.setLimitArea(true);
             this.spiderConfig.setArea_id(area_id);
         }
+        if (version != null) {
+            this.spiderConfig.setVersion(version);
+        }
+
         if (delay_time != 1000)
             this.spiderConfig.setDelay_time(delay_time);
 
@@ -116,7 +104,8 @@ public class ZhongHuaYingCaiSpider {
     }
 
     public boolean init(String dbName, String db_ip, int port, String collectionName, String mongodbUserName, String mongodbPassword,
-                        String username, String password, String area_id, int delay_time) {
+                        String username, String password, String area_id, String version, int delay_time,
+                        String keyword_path_name, String keyword_output_path, String output_file_name) {
         if (dbName == null) {
             logger.error("dbName == null,example:yingcai");
             return false;
@@ -192,7 +181,7 @@ public class ZhongHuaYingCaiSpider {
                     continue;
                 } else {
                     logger.info("填写skipkeywords" + keyWord.getSecondlevel() + ":" + code);
-                    keyWordsManager.writeKeyWord(keyWord, code);
+                    keyWordsManager.writeKeyWord(this.keyword_output_path + this.output_file_name, keyWord, code);
                     TimeUnit.SECONDS.sleep(10);
                     count = 0;
                 }
@@ -236,11 +225,11 @@ public class ZhongHuaYingCaiSpider {
         formData.put("page", "1");
 
         s = SpiderGetResume.doPostToGetList(CommonParameter.resume_list_url, formData, zhongHuaYingCai.getHeaderString());
-        JSONObject jsonObject = null;
+        BasicDBObject jsonObject = null;
         PageInfo pageInfo = null;
         try {
-            jsonObject = JSON.parseObject(s);
-            pageInfo = new PageInfo(jsonObject.getJSONObject("res").getJSONObject("page"));
+            jsonObject = (BasicDBObject) JSON.parse(s);
+            pageInfo = new PageInfo((BasicDBObject)((BasicDBObject)jsonObject.get("res")).get("page"));
         } catch (Exception e) {
             logger.error("page:" + s);
             if (s.length() < 3) {
@@ -248,8 +237,8 @@ public class ZhongHuaYingCaiSpider {
             } else if (s.contains("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">")) {
                 return ERROR;
             }
-            jsonObject = JSON.parseObject(s);
-            int msg = jsonObject.getIntValue("msg");
+            jsonObject = (BasicDBObject)JSON.parse(s);
+            int msg = jsonObject.getInt("msg");
             if (msg == 999999) {
                 return ERROR_999999;
             }
@@ -263,8 +252,8 @@ public class ZhongHuaYingCaiSpider {
         if (pageInfo.getMaxPageNum() > 1) {
             logger.info(keyWord.getSecondlevel() + " 建立线程池");
             pool = Executors.newFixedThreadPool(3);
-            pageNum = pageInfo.getMaxPageNum() > 8 ? 8 : pageInfo.getMaxPageNum();
-//            int pageNum = pageInfo.getMaxPageNum();
+//            pageNum = pageInfo.getMaxPageNum() > 8 ? 8 : pageInfo.getMaxPageNum();
+            pageNum = pageInfo.getMaxPageNum();
             tasks = new FutureTask[pageNum+1];
             for (int i = 2; i <= pageNum; i++) {
                 logger.info(keyWord.getSecondlevel() + " 建立线程 " + i);
@@ -279,10 +268,10 @@ public class ZhongHuaYingCaiSpider {
             pool.shutdown();
         }
 
-        JSONArray jsonArray = jsonObject.getJSONObject("res").getJSONArray("resumeList");
+        BasicDBList jsonArray = (BasicDBList)((BasicDBObject)jsonObject.get("res")).get("resumeList");
         Iterator<Object> iterator = jsonArray.iterator();
         while (iterator.hasNext()) {
-            JSONObject obj = (JSONObject) iterator.next();
+            BasicDBObject obj = (BasicDBObject) iterator.next();
             Resume resume = SpiderGetResume.getResumeDetil(obj, keyWord, zhongHuaYingCai.getHeaderString(), this.mongoDBHelper,1000);
             if (resume != null) {
                 int i = this.mongoDBHelper.upsertResumInfo(resume, keyWord);
@@ -290,7 +279,7 @@ public class ZhongHuaYingCaiSpider {
                     count++;
             }
         }
-        logger.info(keyWord.getSecondlevel() + "第1页爬取完成");
+        logger.info(keyWord.getSecondlevel() + "第1页爬取完成:"+count);
         if (pageInfo.getMaxPageNum() > 1) {
             logger.info(keyWord.getSecondlevel() + "等待子线程结束");
             for (int i = 2; i <= pageNum; i++) {

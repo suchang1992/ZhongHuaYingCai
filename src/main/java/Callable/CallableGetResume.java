@@ -4,10 +4,10 @@ import Pojo.KeyWord;
 import Pojo.Resume;
 import Utils.MongoHelper;
 import Utils.ZhongHuaYingCaiLogin;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONException;
-import com.alibaba.fastjson.JSONObject;
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
+import com.mongodb.util.JSON;
+import com.mongodb.util.JSONParseException;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -67,17 +67,17 @@ public class CallableGetResume implements Callable {
         }
 
 
-        JSONObject jsonObject = null;
+        BasicDBObject jsonObject = null;
         try {
-            jsonObject = JSON.parseObject(s);
-        } catch (JSONException e) {
+            jsonObject = (BasicDBObject) JSON.parse(s);
+        } catch (JSONParseException e) {
             logger.error("page:" + s);
             return null;
         }
-        JSONArray jsonArray = jsonObject.getJSONObject("res").getJSONArray("resumeList");
+        BasicDBList jsonArray = (BasicDBList)((BasicDBObject)jsonObject.get("res")).get("resumeList");
         Iterator<Object> iterator = jsonArray.iterator();
         while (iterator.hasNext()) {
-            JSONObject obj = (JSONObject) iterator.next();
+            BasicDBObject obj = (BasicDBObject) iterator.next();
             Resume resume = getResumeDetil(obj, keyWord, zhongHuaYingCai);
 //            TimeUnit.SECONDS.sleep(2);
             if (resume != null)
@@ -87,7 +87,7 @@ public class CallableGetResume implements Callable {
         return null;
     }
 
-    private Resume getResumeDetil(JSONObject obj, KeyWord keyWord, ZhongHuaYingCaiLogin zhongHuaYingCai) {
+    private Resume getResumeDetil(BasicDBObject obj, KeyWord keyWord, ZhongHuaYingCaiLogin zhongHuaYingCai) {
         String resumeID = obj.getString("cvId");
 
         Resume resume = new Resume(resumeID);
@@ -114,8 +114,8 @@ public class CallableGetResume implements Callable {
         }
         logger.error(resumeID + ":detil:" + s);
         try {//如果转化失败 则返回空
-            resume.setResumeDetil(JSONObject.parseObject(s));
-        } catch (JSONException e) {
+            resume.setResumeDetil((BasicDBObject)JSON.parse(s));
+        } catch (JSONParseException e) {
             logger.error("error:" + s);
             return null;
         }

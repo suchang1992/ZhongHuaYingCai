@@ -23,8 +23,8 @@ public class MongoDBHelper {
     public static final int UPDATE_FIRST_AND_SECOND = 2;
     public static final int UPDATE_FIRST = 3;
     public static final int UPDATE_SECOND = 4;
-    public static final int ERROR = 5;
-    public static final int JSON_ERROR = 6;
+    public static final int ERROR = -5;
+    public static final int JSON_ERROR = -6;
 
 
     public MongoDBHelper(SpiderConfig spiderConfig) {
@@ -56,12 +56,27 @@ public class MongoDBHelper {
     }
 
     /**
+     * 判断该简历是在库中
+     * @param time
+     * @param resumeID
+     * @return 找到：true 未找到：false
+     */
+    public boolean isInMongoSearchByIdAndTime(String resumeID, int time){
+        BasicDBObject query = new BasicDBObject("resumeID", resumeID).append("simple_resume.refreshDate",time);
+        DBObject yingcai_resume = this.db.getCollection(spiderConfig.getCollectionName()).findOne(query);
+        if (yingcai_resume == null){
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * 更新或插入操作
      * @param resume
      * @param keyWord
      */
     public int upsertResumInfo(Resume resume, KeyWord keyWord) {
-        BasicDBObject query = new BasicDBObject("resumeID", resume.getResumeID());
+        BasicDBObject query = new BasicDBObject("resumeID", resume.getResumeID()).append("simple_resume.refreshDate",resume.getSimpleResume().getInt("refreshDate"));
         DBObject yingcai_resume = this.db.getCollection(spiderConfig.getCollectionName()).findOne(query);
         try {
             if (yingcai_resume == null) {
@@ -70,7 +85,10 @@ public class MongoDBHelper {
                         .append("resumeID", resume.getResumeID())
                         .append("simple_resume", resume.getSimpleResume())
                         .append("resume_detil", resume.getResumeDetil())
-                        .append("crawled_time", new Date().getTime());
+                        .append("crawled_time", new Date().getTime())
+                        .append("refreshDate",resume.getRefreshDate())
+                        .append("version",resume.getVersion());
+
                 this.collection.update(query, obj, true, false);
                 logger.info("存入:"+resume.getResumeID());
                 return INSERT;

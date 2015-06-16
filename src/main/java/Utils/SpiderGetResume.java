@@ -2,8 +2,9 @@ package Utils;
 
 import Pojo.KeyWord;
 import Pojo.Resume;
-import com.alibaba.fastjson.JSONException;
-import com.alibaba.fastjson.JSONObject;
+import com.mongodb.BasicDBObject;
+import com.mongodb.util.JSON;
+import com.mongodb.util.JSONParseException;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -66,15 +67,21 @@ public class SpiderGetResume {
      * @param cookie
      * @return
      */
-    public static Resume getResumeDetil(JSONObject obj, KeyWord keyWord, String cookie, MongoDBHelper mongoDBHelper, int delay) {
+    public static Resume getResumeDetil(BasicDBObject obj, KeyWord keyWord, String cookie, MongoDBHelper mongoDBHelper, int delay) {
         String resumeID = obj.getString("cvId");
         Resume resume = new Resume(resumeID);
         resume.setKeyWord(keyWord);
         resume.setSimpleResume(obj);
-        if (mongoDBHelper.isInMongoSearchById(resumeID)) {
+        resume.setRefreshDate(obj.getInt("refreshDate"));
+        if (mongoDBHelper.isInMongoSearchByIdAndTime(resumeID, resume.getRefreshDate())) {
             logger.info("skip:" + resumeID);
             return resume;
         }
+//        if (mongoDBHelper.isInMongoSearchById(resumeID)) {
+//            logger.info("skip:" + resumeID);
+//            return resume;
+//        }
+
         try {
             logger.info("休息" + delay + "毫秒");
             TimeUnit.MILLISECONDS.sleep(delay);
@@ -86,10 +93,10 @@ public class SpiderGetResume {
             logger.info(resumeID + " response 为status 400 参数错误");
             return null;
         }
-        logger.error(resumeID + ":detil:" + s);
+        logger.info(resumeID + ":detil:" + s);
         try {//如果转化失败 则返回空
-            resume.setResumeDetil(JSONObject.parseObject(s));
-        } catch (JSONException e) {
+            resume.setResumeDetil((BasicDBObject)JSON.parse(s));
+        } catch (JSONParseException e) {
             logger.error("error:" + s);
             return null;
         }
